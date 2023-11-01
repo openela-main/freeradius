@@ -1,0 +1,39 @@
+Author: Antonio Torres <antorres@redhat.com>
+Date:   Fri Jul 2 07:12:48 2021 -0400
+Subject: [PATCH] exit if host in FIPS mode and MD5 not explicitly allowed
+
+	FIPS does not allow MD5, which FreeRADIUS needs to work. The user should
+	explicitly allow MD5 usage by setting the RADIUS_MD5_FIPS_OVERRIDE environment
+	variable to 1 or else FR should exit at start.
+	
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1958979
+	Signed-off-by: Antonio Torres antorres@redhat.com
+---
+ src/main/radiusd.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/src/main/radiusd.c b/src/main/radiusd.c
+index 9739514509..58a48895e6 100644
+--- a/src/main/radiusd.c
++++ b/src/main/radiusd.c
+@@ -298,6 +298,20 @@ int main(int argc, char *argv[])
+ 		exit(EXIT_FAILURE);
+ 	}
+ 
++	/*
++	 *  If host is in FIPS mode, we need the user to explicitly allow MD5 usage.
++	 */
++	char *fips_md5_override = getenv("RADIUS_MD5_FIPS_OVERRIDE");
++	FILE *fips_file = fopen("/proc/sys/crypto/fips_enabled", "r");
++	if (fips_file != NULL) {
++		int fips_enabled = fgetc(fips_file) - '0';
++		fclose(fips_file);
++		if (fips_enabled == 1 && (fips_md5_override == NULL || atoi(fips_md5_override) != 1)) {
++			fprintf(stderr, "Cannot run FreeRADIUS in FIPS mode because it uses MD5. To allow MD5 usage, set RADIUS_MD5_FIPS_OVERRIDE=1 before starting FreeRADIUS.\n");
++			exit(EXIT_FAILURE);
++		}
++	}
++
+ 	/*
+ 	 *  According to the talloc peeps, no two threads may modify any part of
+ 	 *  a ctx tree with a common root without synchronisation.

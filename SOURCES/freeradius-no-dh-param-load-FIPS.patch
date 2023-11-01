@@ -1,0 +1,45 @@
+From 42693cba452efa00a4848beb1514229149520cc1 Mon Sep 17 00:00:00 2001
+From: Alexander Scheel <ascheel@redhat.com>
+Date: Wed, 5 Aug 2020 11:39:45 -0400
+Subject: [PATCH] Ignore user-provided dhparams in FIPS mode (#3554)
+
+OpenSSL in RHEL 8.3 introduces a breaking change in FIPS mode:
+user-provided dhparams will be ignored (and dhparam generation
+may fail as well), unless they are on the FIPS approved list of
+parameters. However, OpenSSL since v1.1.1 will automatically select
+an appropriate DH parameter set anyways, if the user did not provide
+any. These will be FIPS approved.
+
+Signed-off-by: Alexander Scheel <ascheel@redhat.com>
+---
+ src/main/tls.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/src/main/tls.c b/src/main/tls.c
+index 5809a1bd7d..5e6493333c 100644
+--- a/src/main/tls.c
++++ b/src/main/tls.c
+@@ -1352,6 +1352,23 @@ static int load_dh_params(SSL_CTX *ctx, char *file)
+
+ 	if (!file) return 0;
+
++	/*
++	 * Prior to trying to load the file, check what OpenSSL will do with it.
++	 *
++	 * Certain downstreams (such as RHEL) will ignore user-provided dhparams
++	 * in FIPS mode, unless the specified parameters are FIPS-approved.
++	 * However, since OpenSSL >= 1.1.1 will automatically select parameters
++	 * anyways, there's no point in attempting to load them.
++	 *
++	 * Change suggested by @t8m
++	 */
++#if OPENSSL_VERSION_NUMBER >= 0x10101000L
++	if (FIPS_mode() > 0) {
++		WARN(LOG_PREFIX ": Ignoring user-selected DH parameters in FIPS mode. Using defaults.");
++		return 0;
++	}
++#endif
++
+ 	if ((bio = BIO_new_file(file, "r")) == NULL) {
+ 		ERROR(LOG_PREFIX ": Unable to open DH file - %s", file);
+ 		return -1;
