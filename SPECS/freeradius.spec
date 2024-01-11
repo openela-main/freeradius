@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.21
-Release: 37%{?dist}
+Release: 38%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: http://www.freeradius.org/
 
@@ -862,6 +862,10 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Mon May 22 2023 Antonio Torres <antorres@redhat.com> - 3.0.21-38
+- Fix crash when verifying client certificate
+  Resolves: #2183447
+
 * Wed Dec 14 2022 Antonio Torres <antorres@redhat.com> - 3.0.21-37
 - Fix defect found by covscan
   Resolves: #2151705
