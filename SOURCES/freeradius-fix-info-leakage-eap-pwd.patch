@@ -1,0 +1,76 @@
+From: Antonio Torres <antorres@redhat.com>
+Date: Fri, 09 Dec 2022
+Subject: Fix information leakage in EAP-PWD
+
+The EAP-PWD function compute_password_element() leaks information about the 
+password which allows an attacker to substantially reduce the size of an 
+offline dictionary attack.
+
+Patch adapted from: https://github.com/FreeRADIUS/freeradius-server/commit/9e5e8f2f
+
+Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=2151702
+Signed-off-by: Antonio Torres <antorres@redhat.com>
+---
+diff --git a/src/modules/rlm_eap/types/rlm_eap_pwd/eap_pwd.c b/src/modules/rlm_eap/types/rlm_eap_pwd/eap_pwd.c
+index d94851c3aa..9f86b62114 100644
+--- a/src/modules/rlm_eap/types/rlm_eap_pwd/eap_pwd.c
++++ b/src/modules/rlm_eap/types/rlm_eap_pwd/eap_pwd.c
+@@ -39,6 +39,8 @@ USES_APPLE_DEPRECATED_API	/* OpenSSL API has been deprecated by Apple */
+ #include <freeradius-devel/radiusd.h>
+ #include <freeradius-devel/modules.h>
+ 
++static uint8_t allzero[SHA256_DIGEST_LENGTH] = { 0x00 };
++
+ /* The random function H(x) = HMAC-SHA256(0^32, x) */
+ static void H_Init(HMAC_CTX *ctx)
+ {
+@@ -114,15 +116,13 @@ int compute_password_element (pwd_session_t *session, uint16_t grp_num,
+ 			      uint32_t *token)
+ {
+ 	BIGNUM *x_candidate = NULL, *rnd = NULL, *cofactor = NULL;
+-	HMAC_CTX *ctx = NULL;
++	EVP_MD_CTX *hmac_ctx;
++	EVP_PKEY *hmac_pkey;
+ 	uint8_t pwe_digest[SHA256_DIGEST_LENGTH], *prfbuf = NULL, ctr;
+ 	int nid, is_odd, primebitlen, primebytelen, ret = 0;
+ 
+-	ctx = HMAC_CTX_new();
+-	if (ctx == NULL) {
+-		DEBUG("failed allocating HMAC context");
+-		goto fail;
+-	}
++	MEM(hmac_ctx = EVP_MD_CTX_new());
++	MEM(hmac_pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, allzero, sizeof(allzero)));
+ 
+ 	switch (grp_num) { /* from IANA registry for IKE D-H groups */
+ 	case 19:
+@@ -203,13 +203,12 @@ int compute_password_element (pwd_session_t *session, uint16_t grp_num,
+ 		 *    pwd-seed = H(token | peer-id | server-id | password |
+ 		 *		   counter)
+ 		 */
+-		H_Init(ctx);
+-		H_Update(ctx, (uint8_t *)token, sizeof(*token));
+-		H_Update(ctx, (uint8_t const *)id_peer, id_peer_len);
+-		H_Update(ctx, (uint8_t const *)id_server, id_server_len);
+-		H_Update(ctx, (uint8_t const *)password, password_len);
+-		H_Update(ctx, (uint8_t *)&ctr, sizeof(ctr));
+-		H_Final(ctx, pwe_digest);
++		EVP_DigestSignInit(hmac_ctx, NULL, EVP_sha256(), NULL, hmac_pkey);
++		EVP_DigestSignUpdate(hmac_ctx, (uint8_t *)token, sizeof(*token));
++		EVP_DigestSignUpdate(hmac_ctx, (uint8_t const *)id_peer, id_peer_len);
++		EVP_DigestSignUpdate(hmac_ctx, (uint8_t const *)id_server, id_server_len);
++		EVP_DigestSignUpdate(hmac_ctx, (uint8_t const *)password, password_len);
++		EVP_DigestSignUpdate(hmac_ctx, (uint8_t *)&ctr, sizeof(ctr));
+ 
+ 		BN_bin2bn(pwe_digest, SHA256_DIGEST_LENGTH, rnd);
+ 		if (eap_pwd_kdf(pwe_digest, SHA256_DIGEST_LENGTH, "EAP-pwd Hunting And Pecking",
+@@ -282,7 +281,8 @@ int compute_password_element (pwd_session_t *session, uint16_t grp_num,
+ 	BN_clear_free(x_candidate);
+ 	BN_clear_free(rnd);
+ 	talloc_free(prfbuf);
+-	HMAC_CTX_free(ctx);
++	EVP_MD_CTX_free(hmac_ctx);
++	EVP_PKEY_free(hmac_pkey);
+ 
+ 	return ret;
+ }

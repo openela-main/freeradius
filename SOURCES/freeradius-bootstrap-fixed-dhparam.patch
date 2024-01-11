@@ -1,0 +1,52 @@
+From b31f1ab9a0e1c010037d2d660e3ce4ea7eb07d6c Mon Sep 17 00:00:00 2001
+From: Alexander Scheel <ascheel@redhat.com>
+Date: Wed, 5 Aug 2020 16:10:52 -0400
+Subject: [PATCH] Use fixed FIPS-approved dhparam by default
+
+Signed-off-by: Alexander Scheel <ascheel@redhat.com>
+---
+ raddb/certs/Makefile  | 2 +-
+ raddb/certs/bootstrap | 7 +++++--
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/raddb/certs/Makefile b/raddb/certs/Makefile
+index 5cbfd46..41b7aea 100644
+--- a/raddb/certs/Makefile
++++ b/raddb/certs/Makefile
+@@ -59,7 +59,7 @@ passwords.mk: server.cnf ca.cnf client.cnf inner-server.cnf
+ #
+ ######################################################################
+ dh:
+-	$(OPENSSL) dhparam -out dh -2 $(DH_KEY_SIZE)
++	cp rfc3526-group-18-8192.dhparam dh
+ 
+ ######################################################################
+ #
+diff --git a/raddb/certs/bootstrap b/raddb/certs/bootstrap
+index 9920ecf..59b3310 100755
+--- a/raddb/certs/bootstrap
++++ b/raddb/certs/bootstrap
+@@ -13,6 +13,10 @@
+ umask 027
+ cd `dirname $0`
+ 
++if [ ! -e random ]; then
++  ln -sf /dev/urandom random
++fi
++
+ make -h > /dev/null 2>&1
+ 
+ #
+@@ -35,8 +39,7 @@ fi
+ #  re-generate these commands.
+ #
+ if [ ! -e dh ]; then
+-  openssl dhparam -out dh 2048 || exit 1
+-  ln -sf /dev/urandom random
++  cp rfc3526-group-18-8192.dhparam dh
+ fi
+ 
+ if [ ! -e server.key ]; then
+-- 
+2.26.2
+

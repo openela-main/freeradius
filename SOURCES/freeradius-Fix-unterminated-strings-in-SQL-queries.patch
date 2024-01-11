@@ -1,0 +1,41 @@
+From 3fd832baf898fe6d6f974cd2d36d1c5206bc2209 Mon Sep 17 00:00:00 2001
+From: Antonio Torres <antorres@redhat.com>
+Date: Fri, 12 Nov 2021 16:23:05 +0100
+Subject: [PATCH] Fix unterminated strings in SQL queries
+
+Resolves: bz#2021247
+Signed-off-by: Antonio Torres <antorres@redhat.com>
+---
+ raddb/mods-config/sql/ippool/mysql/queries.conf  | 2 +-
+ raddb/mods-config/sql/ippool/sqlite/queries.conf | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/raddb/mods-config/sql/ippool/mysql/queries.conf b/raddb/mods-config/sql/ippool/mysql/queries.conf
+index 2dfc6574dd..444812a047 100644
+--- a/raddb/mods-config/sql/ippool/mysql/queries.conf
++++ b/raddb/mods-config/sql/ippool/mysql/queries.conf
+@@ -114,7 +114,7 @@ allocate_update = "\
+ 		nasipaddress = '%{NAS-IP-Address}', pool_key = '${pool_key}', \
+ 		callingstationid = '%{Calling-Station-Id}', \
+ 		username = '%{User-Name}', expiry_time = NOW() + INTERVAL ${lease_duration} SECOND \
+-	WHERE framedipaddress = '%I'
++	WHERE framedipaddress = '%I'"
+ 
+ #
+ #  Use a stored procedure to find AND allocate the address. Read and customise
+diff --git a/raddb/mods-config/sql/ippool/sqlite/queries.conf b/raddb/mods-config/sql/ippool/sqlite/queries.conf
+index 31a5df3659..e92466108b 100644
+--- a/raddb/mods-config/sql/ippool/sqlite/queries.conf
++++ b/raddb/mods-config/sql/ippool/sqlite/queries.conf
+@@ -89,7 +89,7 @@ allocate_update = "\
+ 		callingstationid = '%{Calling-Station-Id}', \
+ 		username = '%{User-Name}', \
+ 		expiry_time = datetime(strftime('%%s', 'now') + ${lease_duration}, 'unixepoch') \
+-	WHERE framedipaddress = '%I'
++	WHERE framedipaddress = '%I'"
+ 
+ #
+ #  This series of queries frees an IP number when an accounting START record arrives
+-- 
+2.31.1
+
