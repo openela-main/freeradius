@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.21
-Release: 38%{?dist}
+Release: 39%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: http://www.freeradius.org/
 
@@ -32,6 +32,7 @@ Patch8: freeradius-Backport-OpenSSL3-fixes.patch
 Patch9: freeradius-bootstrap-pass-noenc-to-certificate-generation.patch
 Patch10: freeradius-fix-crash-unknown-eap-sim.patch
 Patch11: freeradius-fix-crash-on-invalid-abinary-data.patch
+Patch12: freeradius-fix-python3-library-suffix.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -222,6 +223,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch9 -p1
 %patch10 -p1
 %patch11 -p1
+%patch12 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -862,6 +864,10 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Wed Nov 29 2023 Antonio Torres <antorres@redhat.com> - 3.0.21-39
+- Fix Python3.8+ library name suffix
+  Resolves: RHEL-15900
+
 * Mon May 22 2023 Antonio Torres <antorres@redhat.com> - 3.0.21-38
 - Fix crash when verifying client certificate
   Resolves: #2183447
