@@ -9,7 +9,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.20
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: System Environment/Daemons
 URL: http://www.freeradius.org/
@@ -47,6 +47,7 @@ Patch14: freeradius-Fix-segfault-when-home_server-is-null.patch
 Patch15: freeradius-fix-crash-on-invalid-abinary-data.patch
 Patch16: freeradius-fix-crash-unknown-eap-sim.patch
 Patch17: freeradius-fix-info-leakage-eap-pwd.patch
+Patch18: freeradius-blastradius-fix.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -252,6 +253,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch15 -p1
 %patch16 -p1
 %patch17 -p1
+%patch18 -p1
 
 # Add fixed dhparam file to the source to ensure `make tests` can run.
 cp %{SOURCE105} raddb/certs/rfc3526-group-18-8192.dhparam
@@ -902,6 +904,10 @@ exit 0
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Thu Jul 11 2023 Antonio Torres <antorres@redhat.com> - 3.0.20-15
+- Backport BlastRADIUS CVE fix
+  Resolves: RHEL-46572
+
 * Fri Dec 14 2022 Antonio Torres <antorres@redhat.com> - 3.0.20-14
 - Fix defect found by Covscan
   Resolves: #2151704
