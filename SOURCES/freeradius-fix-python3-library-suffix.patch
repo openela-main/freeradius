@@ -6,7 +6,7 @@ Python 3.8 has removed the "m" suffix in the library name, add a check for it.
 
 Backport of https://github.com/FreeRADIUS/freeradius-server/commit/fa837465493158257e600f28bca009ba890db863
 
-Resolves: https://issues.redhat.com/browse/RHEL-15900
+Resolves: https://issues.redhat.com/browse/RHEL-15503
 Signed-off-by: Antonio Torres <antorres@redhat.com>
 ---
 diff --git a/src/modules/rlm_python3/configure b/src/modules/rlm_python3/configure
