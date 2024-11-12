@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.21
-Release: 40%{?dist}
+Release: 42%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: http://www.freeradius.org/
 
@@ -864,9 +864,17 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
-* Wed Jul 10 2024 Antonio Torres <antorres@redhat.com> - 3.0.21-40
+* Wed Jul 10 2024 Antonio Torres <antorres@redhat.com> - 3.0.21-42
 - Backport fixes for BlastRADIUS CVE
-  Resolves: RHEL-46566
+  Resolves: RHEL-46567
+
+* Wed Apr 24 2024 Antonio Torres <antorres@redhat.com> - 3.0.21-41
+- Rebuild for OpenSSL rebase to 3.2.1
+  Resolves: RHEL-33857
+
+* Mon Apr 01 2024 Antonio Torres <antorres@redhat.com> - 3.0.21-40
+- Comment out unneeded options from mods-available/eap
+  Resolves: RHEL-30830
 
 * Mon Nov 06 2023 Antonio Torres <antorres@redhat.com> - 3.0.21-39
 - Fix Python3.8+ library name suffix
