@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.21
-Release: 42%{?dist}
+Release: 43%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: http://www.freeradius.org/
 
@@ -864,6 +864,10 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Thu Oct 10 2024 Antonio Torres <antorres@redhat.com> - 3.0.21-43
+- Ignore home server ping packets
+  Resolves: RHEL-61557
+
 * Wed Jul 10 2024 Antonio Torres <antorres@redhat.com> - 3.0.21-42
 - Backport fixes for BlastRADIUS CVE
   Resolves: RHEL-46567

@@ -15,6 +15,7 @@ to work on top of OpenSSL 3.0 when the system is in FIPS mode. We enable this ma
 [antorres@redhat.com]: mods-available/eap has been modified to comment out 'disable_tlsv1' and 'dh_file' options.
 [antorres@redhat.com]: add fix for BlastRADIUS CVE, commit range backported: 3a00a6ecc188629b0441fd45ad61ca8986de156e^..da643f1edc267ce95260dc36069e6f1a7a4d66f8,
 this backport includes changes from other files not included in the commit range, to ensure correct compilation.
+[antorres@redhat.com]: add backport from https://github.com/FreeRADIUS/freeradius-server/commit/3a9449539e4c5a74c85685cad6abe6edf412f701.
 ---
  man/man1/radclient.1                               |   10 +-
  man/man1/radtest.1                                 |   13 +-
@@ -65,7 +66,7 @@ this backport includes changes from other files not included in the commit range
  src/main/radtest.in                                |    8 +-
  src/main/realms.c                                  |  354 +++-
  src/main/session.c                                 |   33 +-
- src/main/stats.c                                   |  177 +-
+ src/main/stats.c                                   |  185 +-
  src/main/tls.c                                     | 2012 ++++++++++++++++----
  src/main/tls_listen.c                              |  509 ++++-
  src/modules/proto_dhcp/rlm_dhcp.c                  |    2 +-
@@ -100,7 +101,7 @@ this backport includes changes from other files not included in the commit range
  src/modules/rlm_wimax/milenage.h                   |  128 ++
  src/modules/rlm_wimax/rlm_wimax.c                  |  429 ++++-
  src/tests/keywords/md4                             |   58 +
- 84 files changed, 9222 insertions(+), 1902 deletions(-)
+ 84 files changed, 9230 insertions(+), 1902 deletions(-)
 
 diff --git a/man/man1/radclient.1 b/man/man1/radclient.1
 index 229dcae0c7..b83bee931a 100644
@@ -8816,10 +8817,10 @@ index e359010a1b..8dbf5a6f14 100644
  {
  	ERROR("Simultaneous-Use is not supported");
 diff --git a/src/main/stats.c b/src/main/stats.c
-index 33b5fd238a..6aa908bfea 100644
+index 33b5fd238a..2c5df06d8e 100644
 --- a/src/main/stats.c
 +++ b/src/main/stats.c
-@@ -90,44 +90,58 @@ static void stats_time(fr_stats_t *stats, struct timeval *start,
+@@ -90,44 +90,66 @@ static void stats_time(fr_stats_t *stats, struct timeval *start,
  
  void request_stats_final(REQUEST *request)
  {
@@ -8832,6 +8833,14 @@ index 33b5fd238a..6aa908bfea 100644
 +	if ((request->options & RAD_REQUEST_OPTION_STATS) != 0) return;
  
 -	if ((request->listener->type != RAD_LISTEN_NONE) &&
++	/*
++	 *	This packet was originated by the server, and not
++	 *	received from a client.  It's a status-server or home
++	 *	server "ping" packet.  So we ignore it for statistics
++	 *	purposes.
++	 */
++	if (!request->packet) return;
++
 +	/* don't count statistic requests */
 +	if (request->packet->code == PW_CODE_STATUS_SERVER) {
 +		return;
@@ -8892,7 +8901,7 @@ index 33b5fd238a..6aa908bfea 100644
  #else
  #define INC_DSC(_x)
  #endif
-@@ -140,7 +154,7 @@ void request_stats_final(REQUEST *request)
+@@ -140,7 +162,7 @@ void request_stats_final(REQUEST *request)
  	 *	deleted, because only the main server thread calls
  	 *	this function, which makes it thread-safe.
  	 */
@@ -8901,7 +8910,7 @@ index 33b5fd238a..6aa908bfea 100644
  	case PW_CODE_ACCESS_ACCEPT:
  		INC_AUTH(total_access_accepts);
  
-@@ -268,7 +282,7 @@ void request_stats_final(REQUEST *request)
+@@ -268,7 +290,7 @@ void request_stats_final(REQUEST *request)
  	if (!request->proxy_reply) goto done;	/* simplifies formatting */
  
  #undef INC
@@ -8910,7 +8919,7 @@ index 33b5fd238a..6aa908bfea 100644
  
  	switch (request->proxy_reply->code) {
  	case PW_CODE_ACCESS_ACCEPT:
-@@ -339,7 +353,7 @@ void request_stats_final(REQUEST *request)
+@@ -339,7 +361,7 @@ void request_stats_final(REQUEST *request)
   done:
  #endif /* WITH_PROXY */
  
@@ -8919,7 +8928,7 @@ index 33b5fd238a..6aa908bfea 100644
  }
  
  typedef struct fr_stats2vp {
-@@ -582,6 +596,23 @@ void request_stats_reply(REQUEST *request)
+@@ -582,6 +604,23 @@ void request_stats_reply(REQUEST *request)
  				 */
  				if (!cl) return;
  			}
@@ -8943,7 +8952,7 @@ index 33b5fd238a..6aa908bfea 100644
  		}
  
  
-@@ -597,6 +628,19 @@ void request_stats_reply(REQUEST *request)
+@@ -597,6 +636,19 @@ void request_stats_reply(REQUEST *request)
  			}
  #endif
  
@@ -8963,7 +8972,7 @@ index 33b5fd238a..6aa908bfea 100644
  			/*
  			 *	Else look it up by number.
  			 */
-@@ -615,23 +659,44 @@ void request_stats_reply(REQUEST *request)
+@@ -615,23 +667,44 @@ void request_stats_reply(REQUEST *request)
  			 *	When retrieving client by number, also
  			 *	echo back it's IP address.
  			 */
@@ -9019,7 +9028,7 @@ index 33b5fd238a..6aa908bfea 100644
  			}
  
  			if (server_ip) {
-@@ -674,21 +739,26 @@ void request_stats_reply(REQUEST *request)
+@@ -674,21 +747,26 @@ void request_stats_reply(REQUEST *request)
  		 *	See if we need to look up the server by socket
  		 *	socket.
  		 */
@@ -9054,7 +9063,7 @@ index 33b5fd238a..6aa908bfea 100644
  		if (!this) {
  			stats_error(request, "No such listener");
  			return;
-@@ -730,16 +800,6 @@ void request_stats_reply(REQUEST *request)
+@@ -730,16 +808,6 @@ void request_stats_reply(REQUEST *request)
  		VALUE_PAIR *server_ip, *server_port;
  		fr_ipaddr_t ipaddr;
  
@@ -9071,7 +9080,7 @@ index 33b5fd238a..6aa908bfea 100644
  		server_port = fr_pair_find_by_num(request->packet->vps, PW_FREERADIUS_STATS_SERVER_PORT, VENDORPEC_FREERADIUS, TAG_ANY);
  		if (!server_port) {
  			stats_error(request, "No home server port supplied");
-@@ -749,15 +809,30 @@ void request_stats_reply(REQUEST *request)
+@@ -749,15 +817,30 @@ void request_stats_reply(REQUEST *request)
  #ifndef NDEBUG
  		memset(&ipaddr, 0, sizeof(ipaddr));
  #endif
