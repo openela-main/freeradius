@@ -6,6 +6,7 @@ Backport TLS and OpenSSL3 fixes from the 3.0.x branch as of May 24th, 2022.
 Related: rhbz#1978216
 Related: rhbz#2083699
 Related: rhbz#2263240
+Related: RHEL-93552
 Signed-off-by: Antonio Torres <antorres@redhat.com>
 
 [antorres@redhat.com]: these changes include the macro WITH_FIPS, which allows FreeRADIUS
@@ -16,14 +17,15 @@ to work on top of OpenSSL 3.0 when the system is in FIPS mode. We enable this ma
 [antorres@redhat.com]: add fix for BlastRADIUS CVE, commit range backported: 3a00a6ecc188629b0441fd45ad61ca8986de156e^..da643f1edc267ce95260dc36069e6f1a7a4d66f8,
 this backport includes changes from other files not included in the commit range, to ensure correct compilation.
 [antorres@redhat.com]: add backport from https://github.com/FreeRADIUS/freeradius-server/commit/3a9449539e4c5a74c85685cad6abe6edf412f701.
+[antorres@redhat.com]: sites-available/tls and mods-available/eap have been updated to include the ca_path_reload_interval option.
 ---
  man/man1/radclient.1                               |   10 +-
  man/man1/radtest.1                                 |   13 +-
  raddb/clients.conf                                 |   98 +-
- raddb/mods-available/eap                           |    6 +-
+ raddb/mods-available/eap                           |   17 +-
  raddb/proxy.conf                                   |   83 +-
  raddb/radiusd.conf.in                              |  280 ++-
- raddb/sites-available/tls                          |    8 +
+ raddb/sites-available/tls                          |   18 +
  share/dictionary.freeradius                        |    5 +
  share/dictionary.freeradius.internal               |   54 +-
  src/include/build.h                                |   29 +-
@@ -101,7 +103,7 @@ this backport includes changes from other files not included in the commit range
  src/modules/rlm_wimax/milenage.h                   |  128 ++
  src/modules/rlm_wimax/rlm_wimax.c                  |  429 ++++-
  src/tests/keywords/md4                             |   58 +
- 84 files changed, 9230 insertions(+), 1902 deletions(-)
+ 84 files changed, 9251 insertions(+), 1902 deletions(-)
 
 diff --git a/man/man1/radclient.1 b/man/man1/radclient.1
 index 229dcae0c7..b83bee931a 100644
@@ -304,7 +306,7 @@ index 76b300d3c5..28bd6863b5 100644
  #	client socket_client {
  #		ipaddr = 192.0.2.4
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index a89a783663..bf73485e3c 100644
+index a89a783663..6a8693fe48 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
 @@ -281,7 +281,7 @@ eap {
@@ -316,7 +318,25 @@ index a89a783663..bf73485e3c 100644
  
  		#  If your system doesn't have /dev/urandom,
  		#  you will need to create this file, and
-@@ -392,8 +392,8 @@ eap {
+@@ -328,6 +328,17 @@ eap {
+ 
+ 		ca_path = ${cadir}
+ 
++		# OpenSSL does not reload contents of ca_path dir over time.
++		# That means that if check_crl is enabled and CRLs are loaded
++		# from ca_path dir, at some point CRLs will expire and
++		# the server will stop authenticating users.
++		#
++		# If ca_path_reload_interval is non-zero, it will force OpenSSL
++		# to reload all data from ca_path periodically
++		#
++		# Flush ca_path each hour
++	#	ca_path_reload_interval = 3600
++
+ 		# Accept an expired Certificate Revocation List
+ 		#
+ 	#	allow_expired_crl = no
+@@ -392,8 +403,8 @@ eap {
  		#  tls_max_version.
  		#
  	#	disable_tlsv1_2 = no
@@ -834,10 +854,27 @@ index e8aee3c001..4909c1b901 100644
  	$INCLUDE mods-enabled/
  }
 diff --git a/raddb/sites-available/tls b/raddb/sites-available/tls
-index e2a3b080ca..25a10b6364 100644
+index e2a3b080ca..654d304c83 100644
 --- a/raddb/sites-available/tls
 +++ b/raddb/sites-available/tls
-@@ -468,6 +468,14 @@ home_server tls {
+@@ -203,6 +203,16 @@ listen {
+ 	#	check_crl = yes
+ 		ca_path = ${cadir}
+ 
++		# OpenSSL does not reload contents of ca_path dir over time.
++		# That means that if check_crl is enabled and CRLs are loaded
++		# from ca_path dir, at some point CRLs will expire and
++		# RADIUSd will stop authenticating NASes.
++		# If ca_path_reload_interval is non-zero, it will force OpenSSL
++		# to reload all data from ca_path periodically
++		#
++		# Flush ca_path each hour
++		ca_path_reload_interval = 3600
++
+ 	       #
+ 	       #  If check_cert_issuer is set, the value will
+ 	       #  be checked against the DN of the issuer in
+@@ -468,6 +478,14 @@ home_server tls {
  		#  this configuration item.
  		ca_file = ${cadir}/ca.pem
  
