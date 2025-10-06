@@ -1,0 +1,55 @@
+From: Antonio Torres <antorres@redhat.com>
+Date: Wed, 10 Jul 2024
+Subject: Remove OpenSSL Engine usage
+
+Engine functionality from OpenSSL is deprecated and shouldn't be used.
+
+Related: https://gitlab.com/redhat/centos-stream/rpms/openssl/-/merge_requests/144
+Signed-off-by: Antonio Torres <antorres@redhat.com>
+---
+ configure         | 2 +-
+ configure.ac      | 3 +--
+ src/include/tls-h | 3 ---
+ 3 files changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/configure b/configure
+index 5041ca264f..5ccb061a4c 100755
+--- a/configure
++++ b/configure
+@@ -10515,7 +10515,7 @@ smart_prefix=
+ printf "%s\n" "#define HAVE_OPENSSL_SSL_H 1" >>confdefs.h
+ 
+ 
+-           for ac_header in openssl/asn1.h openssl/conf.h openssl/crypto.h openssl/err.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/md4.h openssl/rand.h openssl/sha.h openssl/ssl.h openssl/ocsp.h openssl/engine.h
++           for ac_header in openssl/asn1.h openssl/conf.h openssl/crypto.h openssl/err.h openssl/evp.h openssl/hmac.h openssl/md5.h openssl/md4.h openssl/rand.h openssl/sha.h openssl/ssl.h openssl/ocsp.h
+ do :
+   as_ac_Header=`printf "%s\n" "ac_cv_header_$ac_header" | $as_tr_sh`
+ ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+diff --git a/configure.ac b/configure.ac
+index a24a8061f6..f6074f694e 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1446,8 +1446,7 @@ if test "x$WITH_OPENSSL" = xyes; then
+       openssl/rand.h \
+       openssl/sha.h \
+       openssl/ssl.h \
+-      openssl/ocsp.h \
+-      openssl/engine.h,
++      openssl/ocsp.h,
+       [ OPENSSL_CPPFLAGS="$smart_include" ],
+       [
+         AC_MSG_FAILURE([failed locating OpenSSL headers. Use --with-openssl-include-dir=<path>, or --with-openssl=no (builds without OpenSSL)])
+diff --git a/src/include/tls-h b/src/include/tls-h
+index 506fb19778..b195ec9fdb 100644
+--- a/src/include/tls-h
++++ b/src/include/tls-h
+@@ -37,9 +37,6 @@ RCSIDH(tls_h, "$Id$")
+ #  define OPENSSL_NO_KRB5
+ #endif
+ #include <openssl/err.h>
+-#ifdef HAVE_OPENSSL_ENGINE_H
+-#  include <openssl/engine.h>
+-#endif
+ #include <openssl/ssl.h>
+ 
+ #ifdef __cplusplus

@@ -1,0 +1,22 @@
+From: Antonio Torres <antorres@redhat.com>
+Date: Wed, 10 Jul 2024
+Subject: Remove unsupported Perl script from package
+
+The recently added radsecret script depends on unsupported packages
+(Convert::Base32 and Crypt::URandom, which are available only in EPEL), so
+remove it from package.
+
+Signed-off-by: Antonio Torres <antorres@redhat.com>
+---
+ src/main/all.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/main/all.mk b/src/main/all.mk
+index f3db386a2a..2517cd215a 100644
+--- a/src/main/all.mk
++++ b/src/main/all.mk
+@@ -1,3 +1,3 @@
+ SUBMAKEFILES := radclient.mk radiusd.mk radsniff.mk radmin.mk radattr.mk \
+-	radwho.mk radlast.mk radtest.mk radzap.mk checkrad.mk radsecret.mk \
++	radwho.mk radlast.mk radtest.mk radzap.mk checkrad.mk \
+ 	libfreeradius-server.mk unittest.mk

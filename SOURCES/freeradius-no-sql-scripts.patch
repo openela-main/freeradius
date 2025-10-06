@@ -1,0 +1,31 @@
+From: Antonio Torres <antorres@redhat.com>
+Date: Wed, 3 Apr 2024
+Subject: Remove SQL helper script from package
+
+This helper script is not needed in RHEL since we stopped supporting the
+freeradius SQL subpackages.
+
+Resolves: RHEL-31745
+Signed-off-by: Antonio Torres <antorres@redhat.com>
+---
+ scripts/all.mk | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/scripts/all.mk b/scripts/all.mk
+index a6e90aa3eb..2f7845a632 100644
+--- a/scripts/all.mk
++++ b/scripts/all.mk
+@@ -1,5 +1,5 @@
+ install: $(R)$(sbindir)/rc.radiusd $(R)$(sbindir)/raddebug \
+-	$(R)$(bindir)/radsqlrelay $(R)$(bindir)/radcrypt $(R)$(bindir)/rlm_sqlippool_tool
++	$(R)$(bindir)/radsqlrelay $(R)$(bindir)/radcrypt
+ 
+ $(R)$(sbindir)/rc.radiusd: scripts/rc.radiusd
+ 	@mkdir -p $(dir $@)
+@@ -17,6 +17,3 @@ $(R)$(bindir)/radcrypt: scripts/cryptpasswd
+ 	@mkdir -p $(dir $@)
+ 	@$(INSTALL) -m 755 $< $@
+ 
+-$(R)$(bindir)/rlm_sqlippool_tool: scripts/sql/rlm_sqlippool_tool
+-	@mkdir -p $(dir $@)
+-	@$(INSTALL) -m 755 $< $@
