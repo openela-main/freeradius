@@ -13,13 +13,14 @@ Signed-off-by: Antonio Torres <antorres@redhat.com>
 
 [antorres@redhat.com]: patch adapted to work together with freeradius-bootstrap-create-only.patch.
 In bootstrap diff, -f is changed to -e in conditionals.
+[antorres@redhat.com]: updated to work with FreeRADIUS 3.0.27
 ---
  raddb/certs/Makefile  | 20 ++++++++++++++++----
  raddb/certs/bootstrap |  6 +++---
  2 files changed, 19 insertions(+), 7 deletions(-)
 
 diff --git a/raddb/certs/Makefile b/raddb/certs/Makefile
-index 5cbfd467ce..cb10394ec3 100644
+index c9fbc9e864..33eeef6640 100644
 --- a/raddb/certs/Makefile
 +++ b/raddb/certs/Makefile
 @@ -60,6 +60,8 @@ passwords.mk: server.cnf ca.cnf client.cnf inner-server.cnf
@@ -60,7 +61,7 @@ index 5cbfd467ce..cb10394ec3 100644
 +	$(OPENSSL) req -new  -out server.csr -keyout server.key -config ./server.cnf -noenc
  	chmod g+r server.key
  
- server.crt: server.csr ca.key ca.pem
+ server.crt: ca.key ca.pem server.csr
 @@ -101,6 +107,8 @@ server.p12: server.crt
  server.pem: server.p12
  	$(OPENSSL) pkcs12 -in server.p12 -out server.pem -passin pass:$(PASSWORD_SERVER) -passout pass:$(PASSWORD_SERVER)
@@ -78,8 +79,8 @@ index 5cbfd467ce..cb10394ec3 100644
 +	$(OPENSSL) req -new  -out client.csr -keyout client.key -config ./client.cnf -noenc
  	chmod g+r client.key
  
- client.crt: client.csr ca.pem ca.key
-@@ -127,6 +135,8 @@ client.pem: client.p12
+ client.crt: ca.key ca.pem client.csr
+@@ -128,6 +136,8 @@ client.pem: client.p12
  	$(OPENSSL) pkcs12 -in client.p12 -out client.pem -passin pass:$(PASSWORD_CLIENT) -passout pass:$(PASSWORD_CLIENT)
  	chmod g+r client.pem
  	cp client.pem $(USER_NAME).pem
@@ -88,7 +89,7 @@ index 5cbfd467ce..cb10394ec3 100644
  
  .PHONY: client.vrfy
  client.vrfy: ca.pem client.pem
-@@ -139,7 +149,7 @@ client.vrfy: ca.pem client.pem
+@@ -140,7 +150,7 @@ client.vrfy: ca.pem client.pem
  #
  ######################################################################
  inner-server.csr inner-server.key: inner-server.cnf
@@ -96,8 +97,8 @@ index 5cbfd467ce..cb10394ec3 100644
 +	$(OPENSSL) req -new  -out inner-server.csr -keyout inner-server.key -config ./inner-server.cnf -noenc
  	chmod g+r inner-server.key
  
- inner-server.crt: inner-server.csr ca.key ca.pem
-@@ -152,6 +162,8 @@ inner-server.p12: inner-server.crt
+ inner-server.crt: ca.key ca.pem inner-server.csr
+@@ -153,6 +163,8 @@ inner-server.p12: inner-server.crt
  inner-server.pem: inner-server.p12
  	$(OPENSSL) pkcs12 -in inner-server.p12 -out inner-server.pem -passin pass:$(PASSWORD_INNER) -passout pass:$(PASSWORD_INNER)
  	chmod g+r inner-server.pem
