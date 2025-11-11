@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.2.5
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPL-2.0-or-later AND LGPL-2.0-or-later
 URL: http://www.freeradius.org/
 
@@ -914,6 +914,10 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Tue Apr 22 2025 Antonio Torres <antorres@redhat.com> - 3.2.5-5
+- Rebuild for OpenSSL 3.5
+  Resolves: RHEL-88054
+
 * Tue Oct 29 2024 Troy Dawson <tdawson@redhat.com> - 3.2.5-4
 - Bump release for October 2024 mass rebuild:
   Resolves: RHEL-64018
