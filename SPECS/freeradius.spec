@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
 Version: 3.0.27
-Release: 1%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: http://www.freeradius.org/
 
@@ -29,6 +29,7 @@ Patch5: freeradius-bootstrap-make-permissions.patch
 Patch6: freeradius-ldap-infinite-timeout-on-starttls.patch
 Patch7: freeradius-bootstrap-pass-noenc-to-certificate-generation.patch
 Patch8: freeradius-no-sqlippool-tool.patch
+Patch9: freeradius-ignore-home-server-ping-packets.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -216,6 +217,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -905,6 +907,14 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Thu Nov 13 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-3
+- Bump release number
+  Resolves: RHEL-128083
+
+* Thu Nov 13 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-2
+- Reintroduce "Ignore home server ping packets"
+  Resolves: RHEL-128083
+
 * Tue Jul 08 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-1
 - Rebase to upstream 3.0.27
   Resolves: RHEL-102101
