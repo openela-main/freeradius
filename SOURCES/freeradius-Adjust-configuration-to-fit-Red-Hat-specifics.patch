@@ -9,12 +9,12 @@ Subject: [PATCH] Adjust configuration to fit Red Hat specifics
  2 files changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/raddb/mods-available/eap b/raddb/mods-available/eap
-index 2621e183c..94494b2c6 100644
+index 97c7435a7c..26daec88d0 100644
 --- a/raddb/mods-available/eap
 +++ b/raddb/mods-available/eap
-@@ -533,7 +533,7 @@
- 			#  You should also delete all of the files
- 			#  in the directory when the server starts.
+@@ -696,7 +696,7 @@ eap {
+ 			#  and create the temporary directory with the
+ 			#  systemd `RuntimeDirectory` unit option.
  			#
 -		#	tmpdir = /tmp/radiusd
 +		#	tmpdir = /var/run/radiusd/tmp

@@ -1,0 +1,48 @@
+From 35a226a33aa8a18b892c0ee1c46ea9f69b42b411 Mon Sep 17 00:00:00 2001
+From: "Alan T. DeKok" <aland@freeradius.org>
+Date: Fri, 22 Aug 2025 07:13:26 -0400
+Subject: [PATCH] run-time disable JIT if PCRE can't allocate executable
+ memory.
+
+[antorres@redhat.com]: This patch will be included in FreeRADIUS 3.2.9.
+[antorres@redhat.com]: This patch has been modified to include the typo fix from 52fc9cd0b71848503fd3a3cdcb81d5440b890e09.
+---
+ src/lib/regex.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/src/lib/regex.c b/src/lib/regex.c
+index 67fd16b2b680..f4d631471bcb 100644
+--- a/src/lib/regex.c
++++ b/src/lib/regex.c
+@@ -152,11 +152,21 @@ ssize_t regex_compile(TALLOC_CTX *ctx, regex_t **out, char const *pattern, size_
+ 		 *	expressions that are going to be
+ 		 *	evaluated repeatedly.
+ 		 */
+-		if (do_jit) {
++		if (do_jit) do {
+ 			ret = pcre2_jit_compile(preg->compiled, PCRE2_JIT_COMPLETE);
+ 			if (ret < 0) {
+ 				PCRE2_UCHAR errbuff[128];
+ 
++				/*
++				 *	PCRE can do JIT, but this UID
++				 *	cannot allocate executable
++				 *	memory.  Stop trying to JIT things.
++				 */
++				if (ret == PCRE2_ERROR_NOMEMORY) {
++					do_jit = false;
++					break;
++				}
++
+ 				pcre2_get_error_message(ret, errbuff, sizeof(errbuff));
+ 				fr_strerror_printf("Pattern JIT failed: %s", (char *)errbuff);
+ 				talloc_free(preg);
+@@ -164,7 +174,7 @@ ssize_t regex_compile(TALLOC_CTX *ctx, regex_t **out, char const *pattern, size_
+ 				return 0;
+ 			}
+ 			preg->jitd = true;
+-		}
++		} while (0);
+ #endif
+ 	}
+ 

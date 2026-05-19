@@ -27,17 +27,17 @@ index 0b2cd74de8..8c623cf95c 100644
  #
  #  For creating documentation via doc/all.mk
 diff --git a/configure b/configure
-index 5041ca264f..ed01ee2bdd 100755
+index 2b82073e9c..ede47569ac 100755
 --- a/configure
 +++ b/configure
-@@ -679,6 +679,7 @@ AUTOCONF
- ACLOCAL
+@@ -681,6 +681,7 @@ ACLOCAL
+ LAST
  RUSERS
  SNMPWALK
 +ENABLE_REPRODUCIBLE_BUILDS
  SNMPGET
  openssl_version_check_config
- WITH_DHCP
+ WITH_RADLAST
 @@ -6976,6 +6977,7 @@ fi
  
  

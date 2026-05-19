@@ -1,7 +1,7 @@
 Summary: High-performance and highly configurable free RADIUS server
 Name: freeradius
-Version: 3.2.5
-Release: 5%{?dist}
+Version: 3.2.8
+Release: 2%{?dist}
 License: GPL-2.0-or-later AND LGPL-2.0-or-later
 URL: http://www.freeradius.org/
 
@@ -29,10 +29,10 @@ Patch5: freeradius-bootstrap-make-permissions.patch
 Patch6: freeradius-ldap-infinite-timeout-on-starttls.patch
 Patch7: freeradius-ease-openssl-version-check.patch
 Patch8: freeradius-configure-c99.patch
-Patch9: freeradius-no-antora-docs.patch
 Patch10: freeradius-no-sql-scripts.patch
 Patch11: freeradius-disable-openssl-engine.patch
 Patch12: freeradius-disable-perl-script.patch
+Patch13: freeradius-disable-jit-if-pcre-cant-allocate-memory.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -217,10 +217,10 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch 6 -p1
 %patch 7 -p1
 %patch 8 -p1
-%patch 9 -p1
 %patch 10 -p1
 %patch 11 -p1
 %patch 12 -p1
+%patch 13 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -340,6 +340,7 @@ rm $RPM_BUILD_ROOT/%{_libdir}/freeradius/rlm_test.so
 
 # remove unsupported config files
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/experimental.conf
+rm -rf $RPM_BUILD_ROOT/%{docdir}/antora
 
 # Mongo will never be supported on Fedora or RHEL
 rm -f $RPM_BUILD_ROOT/%{_sysconfdir}/raddb/mods-config/sql/ippool/mongo/queries.conf
@@ -444,6 +445,7 @@ EOF
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/preprocess
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/preprocess/*
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/realm/freeradius-naptr-to-home-server.sh
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-config/kafka/messages-json.conf
 
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql
 %dir %attr(750,root,radiusd) /etc/raddb/mods-config/sql/counter
@@ -557,6 +559,10 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/wimax
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/yubikey
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/dpsk
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/kafka
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/kafka_async
+%attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/proxy_rate_limit
+
 
 # mods-enabled
 # symlink: /etc/raddb/mods-enabled/xxx -> ../mods-available/xxx
@@ -591,6 +597,7 @@ EOF
 %config(missingok) /etc/raddb/mods-enabled/unix
 %config(missingok) /etc/raddb/mods-enabled/unpack
 %config(missingok) /etc/raddb/mods-enabled/utf8
+%config(missingok) /etc/raddb/mods-enabled/proxy_rate_limit
 
 # policy
 %dir %attr(750,root,radiusd) /etc/raddb/policy.d
@@ -684,6 +691,7 @@ EOF
 %{_libdir}/freeradius/rlm_yubikey.so
 %{_libdir}/freeradius/rlm_dpsk.so
 %{_libdir}/freeradius/rlm_eap_teap.so
+%{_libdir}/freeradius/rlm_proxy_rate_limit.so
 
 # main man pages
 %doc %{_mandir}/man5/clients.conf.5.gz
@@ -914,6 +922,15 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
+* Wed Sep 24 2025 Antonio Torres <antorres@redhat.com> - 3.2.8-2
+- Disable JIT if PCRE can't allocate executable memory
+- Fix warnings from service file
+  Resolves: RHEL-116594
+
+* Tue Sep 02 2025 Antonio Torres <antorres@redhat.com> - 3.2.8-1
+- Rebase to release 3.2.8
+  Resolves: RHEL-107671
+
 * Tue Apr 22 2025 Antonio Torres <antorres@redhat.com> - 3.2.5-5
 - Rebuild for OpenSSL 3.5
   Resolves: RHEL-88054
