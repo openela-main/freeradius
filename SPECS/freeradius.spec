@@ -30,6 +30,7 @@ Patch6: freeradius-ldap-infinite-timeout-on-starttls.patch
 Patch7: freeradius-bootstrap-pass-noenc-to-certificate-generation.patch
 Patch8: freeradius-no-sqlippool-tool.patch
 Patch9: freeradius-ignore-home-server-ping-packets.patch
+Patch10: freeradius-ldap-remove-redundant-free.patch
 
 %global docdir %{?_pkgdocdir}%{!?_pkgdocdir:%{_docdir}/%{name}-%{version}}
 
@@ -218,6 +219,7 @@ This plugin provides the REST support for the FreeRADIUS server project.
 %patch7 -p1
 %patch8 -p1
 %patch9 -p1
+%patch10 -p1
 
 %build
 # Force compile/link options, extra security for network facing daemon
@@ -907,13 +909,13 @@ EOF
 %attr(640,root,radiusd) %config(noreplace) /etc/raddb/mods-available/rest
 
 %changelog
-* Thu Nov 13 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-3
-- Bump release number
-  Resolves: RHEL-128083
+* Mon Sep 21 2026 Antonio Torres <antorres@redhat.com> - 3.0.27-3
+- Remove redundant free in LDAP connection
+  Resolves: RHEL-264961
 
 * Thu Nov 13 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-2
 - Reintroduce "Ignore home server ping packets"
-  Resolves: RHEL-128083
+  Resolves: RHEL-127981
 
 * Tue Jul 08 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-1
 - Rebase to upstream 3.0.27

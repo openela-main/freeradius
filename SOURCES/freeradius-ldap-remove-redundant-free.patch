@@ -1,0 +1,47 @@
+From 75c5b5da127960ffd8716ee3fd453f5d9cf6a71c Mon Sep 17 00:00:00 2001
+From: Antonio Torres <antorres@redhat.com>
+Date: Wed, 2 Sep 2026 16:54:01 +0200
+Subject: [PATCH] ldap: remove redundant talloc_free in retry paths
+
+These calls were correct when originally added, but were made redundant
+in commit 1057ef6aa3, as `fr_connection_reconnect` now already frees the `extra`
+string via `talloc_free_children`.
+
+Remove these calls to prevent bugs related to double-frees.
+
+Upstream: https://github.com/FreeRADIUS/freeradius-server/pull/5927
+Signed-off-by: Antonio Torres <antorres@redhat.com>
+---
+ src/modules/rlm_ldap/ldap.c | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/src/modules/rlm_ldap/ldap.c b/src/modules/rlm_ldap/ldap.c
+index 4f8a1a182621..68017d67ab5a 100644
+--- a/src/modules/rlm_ldap/ldap.c
++++ b/src/modules/rlm_ldap/ldap.c
+@@ -764,8 +764,6 @@ ldap_rcode_t rlm_ldap_bind(rlm_ldap_t const *inst, REQUEST *request, ldap_handle
+ 					LDAP_DBGW_REQ("Bind with %s to %s failed: %s. Got new socket, retrying...",
+ 						      *dn ? dn : "(anonymous)", inst->server, error);
+ 
+-					talloc_free(extra); /* don't leak debug info */
+-
+ 					continue;
+ 				}
+ 			};
+@@ -903,8 +901,6 @@ ldap_rcode_t rlm_ldap_search(LDAPMessage **result, rlm_ldap_t const *inst, REQUE
+ 			if (*pconn) {
+ 				LDAP_DBGW_REQ("Search failed: %s. Got new socket, retrying...", error);
+ 
+-				talloc_free(extra); /* don't leak debug info */
+-
+ 				continue;
+ 			}
+ 
+@@ -1019,7 +1015,6 @@ ldap_rcode_t rlm_ldap_modify(rlm_ldap_t const *inst, REQUEST *request, ldap_hand
+ 			if (*pconn) {
+ 				RWDEBUG("Modify failed: %s. Got new socket, retrying...", error);
+ 
+-				talloc_free(extra); /* don't leak debug info */
+ 				continue;
+ 			}
+ 
