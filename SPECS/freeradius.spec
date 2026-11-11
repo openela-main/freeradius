@@ -911,7 +911,7 @@ EOF
 %changelog
 * Mon Sep 21 2026 Antonio Torres <antorres@redhat.com> - 3.0.27-3
 - Remove redundant free in LDAP connection
-  Resolves: RHEL-264961
+  Resolves: RHEL-264934
 
 * Thu Nov 13 2025 Antonio Torres <antorres@redhat.com> - 3.0.27-2
 - Reintroduce "Ignore home server ping packets"
